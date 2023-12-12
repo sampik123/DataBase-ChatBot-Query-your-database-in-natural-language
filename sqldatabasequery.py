@@ -20,6 +20,7 @@ chat_history = get_chat_history()
 os.environ['OPENAI_API_KEY'] = "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"
 os.environ["SERPAPI_API_KEY"] = "d7a3c3a53753df43a73197406264924597a7413f36edc7d02ae0cf8ecb789854"
 
+
 # Initialize OpenAI model
 llm = OpenAI(temperature=0)
 
@@ -35,6 +36,7 @@ db_password = "sampiksonu"
 db_host = "localhost"
 db_name = "classicmodels"
 db = SQLDatabase.from_uri(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}")
+
 
 # Create a ChatOpenAI model
 chat_llm = ChatOpenAI(model_name="gpt-3.5-turbo")
@@ -52,14 +54,14 @@ agent_executor = create_sql_agent(
     verbose=True,
     prefix=(
         f"You are an agent designed to interact with a {dialect} SQL database.\n"
-        "Given an input question, create a syntactically correct query to run, "
+        "Given an input question, create a syntactically correct query to run,\n "
         "then look at the results of the query and return the answer.\n"
         "Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.\n"
         "You can order the results by a relevant column to return the most interesting examples in the database.\n"
         "Never query for all the columns from a specific table, only ask for the relevant columns given the question.\n"
         "You have access to tools for interacting with the database.\n"
         "Only use the below tools. Only use the information returned by the below tools to construct your final answer.\n"
-        "You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.\n"
+        "You MUST double-check your query before executing it. If you get an error while executing a query, rewrite the query and try again.\n"
         "DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.\n"
         "If the question does not seem related to the database, just return 'I don't know' as the answer."
     ),
@@ -84,7 +86,6 @@ agent_executor = create_sql_agent(
     handle_parsing_errors=True  # Specify how to handle parsing errors
 )
 
-
 st.set_page_config(
     page_title="Database Chatbot",
     page_icon="🤖",
@@ -108,20 +109,31 @@ st.sidebar.write("Made by [Sampik Kumar Gupta](https://www.linkedin.com/in/sampi
 # User input and chat history
 user_input = st.text_input("🗣️ Ask a question:")
 
+def get_table_columns(engine, selected_table):
+    insp = reflection.Inspector.from_engine(engine)
+    columns = insp.get_columns(selected_table)
+    return [column['name'] for column in columns]
+
+
 if st.button("🚀 Submit"):
     if user_input:
         response = agent_executor.run(user_input)
         # Append user input and agent response to chat history
         chat_history.append({"user_input": user_input, "agent_response": response})
 
-# Add a button to explore the schema
-if st.button("🔍 Explore Schema"):
-    # Connect to the database
-    engine = create_engine(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}")
-    insp = reflection.Inspector.from_engine(engine)
-    table_names = insp.get_table_names()
-    st.write("Tables in the database:")
-    st.write(table_names)
+
+# Connect to the database
+engine = create_engine(f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}")
+    
+# Get table names
+insp = reflection.Inspector.from_engine(engine)
+table_names = insp.get_table_names()
+selected_table = st.selectbox("Select a Table", options=table_names, index=0)
+
+# Get and display columns for the selected table
+if selected_table:
+    columns = get_table_columns(engine, selected_table)
+    st.write(f"Columns for {selected_table}: {columns}")
 
 # Display chat history
 st.markdown("💬 Chat History:")
@@ -131,3 +143,5 @@ for chat in chat_history:
 
 if __name__ == "__main__":
     pass
+
+
