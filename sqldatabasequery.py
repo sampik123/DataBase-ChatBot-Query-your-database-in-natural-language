@@ -17,8 +17,8 @@ def get_chat_history():
 chat_history = get_chat_history()
 
 # Set OpenAI and SerpApi API keys
-os.environ['OPENAI_API_KEY'] = "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"
-os.environ["SERPAPI_API_KEY"] = "d7a3c3a53753df43a73197406264924597a7413f36edc7d02ae0cf8ecb789854"
+os.environ['OPENAI_API_KEY'] = "................................................................"
+os.environ["SERPAPI_API_KEY"] = "................................................................"
 
 
 # Initialize OpenAI model
